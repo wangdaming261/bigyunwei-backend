@@ -25,7 +25,7 @@ func main() {
 	}
 	fmt.Printf("主配置文件路径: %v sc: %v\n", configFile, sc)
 
-	logger := common.NewZapLogger(sc.LogLevel)
+	logger := common.NewZapLogger(sc.LogLevel, sc.LogFilePath)
 	defer func(logger *zap.Logger) {
 		err := logger.Sync()
 		if err != nil {

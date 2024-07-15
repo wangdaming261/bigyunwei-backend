@@ -5,9 +5,10 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func NewZapLogger(logLevel string) *zap.Logger {
+func NewZapLogger(logLevel string, logFilePath string) *zap.Logger {
 	atomicLevel := zap.NewAtomicLevel()
 	switch logLevel {
 	case "DEBUG":
@@ -33,12 +34,29 @@ func NewZapLogger(logLevel string) *zap.Logger {
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 		EncodeName:     zapcore.FullNameEncoder,
 	}
+
+	writer := &lumberjack.Logger{
+		Filename:   logFilePath,
+		MaxSize:    100,
+		MaxBackups: 10,
+		MaxAge:     30, //days
+		LocalTime:  true,
+		Compress:   false,
+	}
+
+	zapCoreFile := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.AddSync(writer),
+		atomicLevel,
+	)
+
 	zapCoreConsole := zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderConfig),
 		zapcore.AddSync(os.Stdout),
 		atomicLevel,
 	)
 	core := zapcore.NewTee(
+		zapCoreFile,
 		zapCoreConsole,
 	)
 	return zap.New(core, zap.AddCaller())
