@@ -33,7 +33,7 @@ func main() {
 		}
 	}(logger)
 	logger.Debug("服务启动")
-
+	sc.Logger = logger
 	err = web.StartGin(sc)
 	if err != nil {
 		return
