@@ -7,10 +7,11 @@ import (
 )
 
 func ConfigRoutes(r *gin.Engine) {
-	base := r.Group("/api")
+	base := r.Group("/basic-api")
 	{
 		base.GET("/ping", ping)
 		base.GET("/now", now)
+		base.POST("/login", UserLogin)
 	}
 }
 

@@ -14,7 +14,9 @@ import (
 
 func StartGin(sc *config.ServerConfig) error {
 	//gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	//r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
 
 	varMap := map[string]interface{}{}
 	//varMap[common.GIN_CTX_CONFIG_LOGGER] = sc.Logger
