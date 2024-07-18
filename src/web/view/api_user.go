@@ -27,6 +27,13 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
-	common.OkWithData(user, c)
+	//校验用户
+	dbUser := &models.User{
+		Username: user.Username,
+		Password: user.Password,
+	}
+
+	//生成jwt的token
+	models.TokenNext(dbUser, c)
 
 }

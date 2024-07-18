@@ -1,3 +1,8 @@
 http_addr: "0.0.0.0:80"
 log_level: DEBUG
 log_file_path: json.log
+jwt:
+  signing_key: dayunwei
+  expire_time: 5m
+  buffer_time: 1d
+  issuer: dayunwei

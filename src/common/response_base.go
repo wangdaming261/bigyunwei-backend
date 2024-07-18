@@ -41,6 +41,10 @@ func OkWithData(data interface{}, c *gin.Context) {
 	Result(Success, data, "查询成功", c)
 }
 
+func OkWithDetailed(data interface{}, message string, c *gin.Context) {
+	Result(Success, data, message, c)
+}
+
 func Fail(c *gin.Context) {
 	Result(Error, map[string]interface{}{}, "操作失败", c)
 }
