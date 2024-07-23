@@ -79,3 +79,12 @@ func ReBadFailWithDetailed(data interface{}, message string, c *gin.Context) {
 func Re401FailWithDetailed(data interface{}, message string, c *gin.Context) {
 	Result401(data, message, c)
 }
+
+func Result5xx(code int, data interface{}, message string, c *gin.Context) {
+	c.JSON(http.StatusInternalServerError, BaseResp{
+		Code:    code,
+		Message: message,
+		Data:    data,
+		Type:    "",
+	})
+}

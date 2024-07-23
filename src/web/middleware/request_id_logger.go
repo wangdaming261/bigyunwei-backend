@@ -3,7 +3,6 @@ package middleware
 import (
 	"bytes"
 	"io"
-	"time"
 
 	"go.uber.org/zap/zapcore"
 
@@ -14,8 +13,8 @@ import (
 
 func NewGinZapLogger(logger *zap.Logger) gin.HandlerFunc {
 	return ginzap.GinzapWithConfig(logger, &ginzap.Config{
-		UTC:        true,
-		TimeFormat: time.RFC3339,
+		//UTC:        true,
+		//TimeFormat: time.RFC3339,
 		Context: func(c *gin.Context) []zapcore.Field {
 			var fields []zapcore.Field
 			// log request ID

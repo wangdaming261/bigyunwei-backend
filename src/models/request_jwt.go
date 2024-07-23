@@ -53,8 +53,10 @@ func ParseToken(jwtToken string, sc *config.ServerConfig) (*UserCustomClaims, er
 		return nil, err
 	}
 	if claims, ok := token.Claims.(*UserCustomClaims); ok && token.Valid {
+		//sc.Logger.Info("解析jwt", zap.Any("过期时间", claims.RegisteredClaims.ExpiresAt))
 		return claims, nil
 	}
+
 	return nil, err
 
 }

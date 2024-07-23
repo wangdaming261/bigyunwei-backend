@@ -33,13 +33,23 @@ func LoadServer(filename string) (*ServerConfig, error) {
 		return nil, err
 	}
 	cfg.JWTC.ExpireDuration = duration
+
+	// 解析缓冲时间
+	duration, err = time.ParseDuration(cfg.JWTC.BufferTime)
+	if err != nil {
+		return nil, err
+
+	}
+	cfg.JWTC.BufferDuration = duration
+
 	return cfg, err
 }
 
 type JWT struct {
-	SigningKey     string        `yaml:"signing_key" json:"signing_key"`
-	ExpireTime     string        `yaml:"expire_time" json:"expire-time"`
-	ExpireDuration time.Duration `yaml:"-"`
-	BufferTime     string        `yaml:"buffer_time" json:"buffer-time"`
-	Issuer         string        `yaml:"issuer" json:"issuer"`
+	SigningKey     string        `yaml:"signing_key" json:"signing_key"` //jwt签名 密码加盐
+	ExpireTime     string        `yaml:"expire_time" json:"expire_time"` //过期时间
+	ExpireDuration time.Duration `yaml:"-"`                              //解析配置文件用
+	BufferTime     string        `yaml:"buffer_time" json:"buffer_time"` //过期时间
+	BufferDuration time.Duration `yaml:"-"`                              //临期时间
+	Issuer         string        `yaml:"issuer" json:"issuer"`           //签发者
 }

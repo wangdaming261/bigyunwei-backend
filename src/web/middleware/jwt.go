@@ -4,7 +4,9 @@ import (
 	"bigyunwei-backend/src/common"
 	"bigyunwei-backend/src/config"
 	"bigyunwei-backend/src/models"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +34,19 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			c.Abort()
 			return
 		}
-		// 续期逻辑还没写
+		// 续期逻辑
+		if claims.RegisteredClaims.ExpiresAt.Unix()-time.Now().Unix() < int64(sc.JWTC.BufferDuration/time.Second) {
+			// 续期
+			newToken, err := models.GenJwtToken(claims.User, sc)
+			if err != nil {
+				common.Result5xx(http.StatusInternalServerError, gin.H{"reload": true}, "续期token出错", c)
+				c.Abort()
+				return
+			}
+			// 返回新token
+			c.Header("Authorization", "Bearer "+newToken)
+		}
+
 		c.Set(common.GIN_CTX_JWT_CLAIM, claims)
 		c.Next()
 	}
