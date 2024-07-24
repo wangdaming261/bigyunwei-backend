@@ -3,6 +3,7 @@ package main
 import (
 	"bigyunwei-backend/src/common"
 	"bigyunwei-backend/src/config"
+	"bigyunwei-backend/src/models"
 	"bigyunwei-backend/src/web"
 	"flag"
 	"fmt"
@@ -32,11 +33,20 @@ func main() {
 			fmt.Printf("关闭日志失败: %v\n", err)
 		}
 	}(logger)
-	logger.Debug("服务启动")
 	sc.Logger = logger
+	// 初始化数据库
+	err = models.InitDB(sc)
+	if err != nil {
+		sc.Logger.Error("初始化数据库失败", zap.Error(err))
+		return
+	}
+	err = models.MigrateTable()
+	if err != nil {
+		sc.Logger.Error("迁移表失败", zap.Error(err))
+		return
+	}
 	err = web.StartGin(sc)
 	if err != nil {
 		return
 	}
-
 }

@@ -6,3 +6,6 @@ jwt:
   buffer_time: 1m
   issuer: dayunwei
   expire_time: 3m
+
+mysql:
+  dsn: "internal:idZHFPzLLZ@tcp(192.168.3.220:3306)/goweb?charset=utf8mb4&parseTime=True&loc=Local"
