@@ -45,6 +45,9 @@ func main() {
 		sc.Logger.Error("迁移表失败", zap.Error(err))
 		return
 	}
+
+	// TODO 测试用，后续可以删除
+	models.MockUserRegister(sc)
 	err = web.StartGin(sc)
 	if err != nil {
 		return
