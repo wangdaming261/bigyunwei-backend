@@ -2,6 +2,7 @@ package models
 
 import (
 	"bigyunwei-backend/src/common"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 )
@@ -24,9 +25,13 @@ type User struct {
 
 func CheckUserPassword(ru *UserLoginRequest) (*User, error) {
 	var user User
-	err := Db.Where("username = ?", ru.Username).First(&user).Error
+	err := Db.Where("username = ?", ru.Username).Preload("Roles").First(&user).Error
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("用户不存在")
+
+		}
+		return nil, fmt.Errorf("数据库错误: %w", err)
 	}
 	// 对比password
 	if !common.BcryptCheck(ru.Password, user.Password) {
