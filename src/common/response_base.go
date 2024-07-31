@@ -56,7 +56,7 @@ func FailWithDetailed(data interface{}, message string, c *gin.Context) {
 	Result(Error, data, message, c)
 }
 func Result4xx(code int, data interface{}, message string, c *gin.Context) {
-	c.JSON(http.StatusBadRequest, BaseResp{
+	c.JSON(http.StatusOK, BaseResp{
 		Code:    code,
 		Message: message,
 		Data:    data,

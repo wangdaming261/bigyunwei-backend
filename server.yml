@@ -5,7 +5,7 @@ jwt:
   signing_key: dayunwei
   buffer_time: 1m
   issuer: dayunwei
-  expire_time: 3m
+  expire_time: 30m
 
 mysql:
   dsn: "internal:idZHFPzLLZ@tcp(192.168.3.220:3306)/bigyunwei?charset=utf8mb4&parseTime=True&loc=Local"
