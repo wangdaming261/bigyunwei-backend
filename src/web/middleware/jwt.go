@@ -4,6 +4,7 @@ import (
 	"bigyunwei-backend/src/common"
 	"bigyunwei-backend/src/config"
 	"bigyunwei-backend/src/models"
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"time"
@@ -44,10 +45,16 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 				return
 			}
 			// 返回新token
-			c.Header("Authorization", "Bearer "+newToken)
+			c.Header("new-token", newToken)
+		} else {
+			sc.Logger.Info("jwt还没到期，无需刷新jwt",
+				zap.String("user", claims.Username),
+				zap.Any("老token过期时间", claims.RegisteredClaims.ExpiresAt),
+				zap.Any("临期窗口", sc.JWTC.BufferDuration),
+			)
 		}
 
-		c.Set(common.GIN_CTX_JWT_CLAIM, claims)
+		c.Set(common.GIN_CTX_JWT_USER_NAME, claims.Username)
 		c.Next()
 	}
 }

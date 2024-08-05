@@ -40,3 +40,15 @@ func CheckUserPassword(ru *UserLoginRequest) (*User, error) {
 	return &user, nil
 
 }
+
+func GetUserByUserName(userName string) (*User, error) {
+	var user User
+	err := Db.Where("username = ?", userName).Preload("Roles").First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("用户不存在")
+		}
+		return nil, fmt.Errorf("数据库错误: %w", err)
+	}
+	return &user, nil
+}

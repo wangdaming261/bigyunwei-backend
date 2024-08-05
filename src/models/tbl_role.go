@@ -11,4 +11,5 @@ type Role struct {
 	HomePath  string  `json:"HomePath" gorm:"comment:'登录后的默认访问页'"`
 	Status    int     `json:"status" gorm:"default:1;comment:'角色是否被冻结 1正常 2冻结'"` // 用户是否被冻结 1正常 2冻结
 	Users     []*User `gorm:"many2many:user_roles;comment:'用户'"`
+	Menus     []*Menu `gorm:"many2many:role_menus;comment:'菜单'"`
 }

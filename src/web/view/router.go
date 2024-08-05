@@ -13,7 +13,8 @@ func ConfigRoutes(r *gin.Engine) {
 		afterLoginApiGroup := base.Group("/api")
 		afterLoginApiGroup.Use(middleware.JWTAuthMiddleware())
 		{
-			afterLoginApiGroup.GET("/getUserInfo", getUserInfoAfterLog)
+			afterLoginApiGroup.GET("/getUserInfo", getUserInfoAfterLogin)
+			afterLoginApiGroup.GET("/getPermCode", getPermCode)
 		}
 		systemApiGroup := afterLoginApiGroup.Group("/system")
 		{

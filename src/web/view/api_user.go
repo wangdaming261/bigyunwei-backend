@@ -5,6 +5,7 @@ import (
 	"bigyunwei-backend/src/config"
 	"bigyunwei-backend/src/models"
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 
 	"github.com/go-playground/validator/v10"
@@ -48,7 +49,20 @@ func UserLogin(c *gin.Context) {
 
 }
 
-func getUserInfoAfterLog(c *gin.Context) {
-	jwtClaim := c.MustGet(common.GIN_CTX_JWT_CLAIM).(*models.UserCustomClaims)
-	common.OkWithDetailed(jwtClaim.User, "ok", c)
+func getUserInfoAfterLogin(c *gin.Context) {
+
+	userName := c.MustGet(common.GIN_CTX_JWT_USER_NAME).(string)
+	sc := c.MustGet(common.GIN_CTX_CONFIG_CONFIG).(*config.ServerConfig)
+	user, err := models.GetUserByUserName(userName)
+	if err != nil {
+		sc.Logger.Error("通过token解析到的userName去数据库中找User失败",
+			zap.Error(err),
+		)
+		common.ReBadFailWithMessage(fmt.Sprintf("用户名不存在或者密码错误:%v", err.Error()), c)
+		return
+	}
+	common.OkWithDetailed(user, "ok", c)
+}
+func getPermCode(c *gin.Context) {
+	common.OkWithDetailed([]string{"1000", "2000", "3000"}, "ok", c)
 }
