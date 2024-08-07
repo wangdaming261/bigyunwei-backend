@@ -43,7 +43,7 @@ func CheckUserPassword(ru *UserLoginRequest) (*User, error) {
 
 func GetUserByUserName(userName string) (*User, error) {
 	var user User
-	err := Db.Where("username = ?", userName).Preload("Roles").First(&user).Error
+	err := Db.Where("username = ?", userName).Preload("Roles.Menus").First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("用户不存在")
