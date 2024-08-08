@@ -3,11 +3,14 @@ package main
 import (
 	"bigyunwei-backend/src/common"
 	"bigyunwei-backend/src/config"
+	"bigyunwei-backend/src/cron"
 	"bigyunwei-backend/src/models"
 	"bigyunwei-backend/src/web"
+	"context"
 	"flag"
 	"fmt"
 
+	esl "github.com/ning1875/errgroup-signal/signal"
 	"go.uber.org/zap"
 )
 
@@ -45,11 +48,53 @@ func main() {
 		sc.Logger.Error("迁移表失败", zap.Error(err))
 		return
 	}
-
 	// TODO 测试用，后续可以删除
 	models.MockUserRegister(sc)
-	err = web.StartGin(sc)
-	if err != nil {
-		return
-	}
+
+	cm := cron.NewManager(sc)
+
+	group, stopChan := esl.SetupStopSignalContext()
+	ctxAll, cancelAll := context.WithCancel(context.Background())
+
+	group.Go(func() error {
+		logger.Info("[stop chan watch start backend]")
+		for {
+			select {
+			case <-stopChan:
+				logger.Info("stop chan receive quite signal exit")
+				cancelAll()
+				return nil
+			}
+		}
+	})
+
+	group.Go(func() error {
+		logger.Info("计划任务--同步公有云启动")
+		err := cm.SyncCloudResourceManager(ctxAll)
+		if err != nil {
+			logger.Error("计划任务--同步公有云失败", zap.Error(err))
+		}
+		return err
+	})
+
+	group.Go(func() error {
+
+		errChan := make(chan error, 1)
+		go func() {
+			errChan <- web.StartGin(sc)
+		}()
+		logger.Info("start backend")
+		select {
+		case err := <-errChan:
+			logger.Error("[]", zap.Error(err))
+			return err
+		case <-ctxAll.Done():
+			return nil
+		}
+	})
+	group.Wait()
+	//err = web.StartGin(sc)
+	//if err != nil {
+	//	return
+	//}
 }

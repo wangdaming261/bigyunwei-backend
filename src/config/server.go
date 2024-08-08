@@ -14,8 +14,22 @@ type ServerConfig struct {
 	MysqlC      *mysql.Config `yaml:"mysql"`
 	LogLevel    string        `yaml:"log_level"`
 	LogFilePath string        `yaml:"log_file_path"`
-	JWTC        *JWT          `yaml:"jwt"`
-	Logger      *zap.Logger   `yaml:"-"`
+	//SuperRoleName  string           `yaml:"super_role_name"`
+	PublicCloudSync *PublicCloudSync `yaml:"public_cloud_sync"`
+	JWTC            *JWT             `yaml:"jwt"`
+	Logger          *zap.Logger      `yaml:"-"`
+}
+
+type PublicCloudSync struct {
+	RunIntervalSeconds int         `yaml:"run_interval_seconds"`
+	AliCloud           []*AliCloud `yaml:"ali_cloud"`
+}
+
+type AliCloud struct {
+	Enable          bool   `yaml:"enable"`
+	RegionId        string `yaml:"region_id"`
+	AccessKeyId     string `yaml:"access_key_id"`
+	AccessKeySecret string `yaml:"access_key_secret"`
 }
 
 func LoadServer(filename string) (*ServerConfig, error) {

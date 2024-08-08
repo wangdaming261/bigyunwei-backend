@@ -29,10 +29,48 @@ func MigrateTable() error {
 		&User{},
 		&Role{},
 		&Menu{},
+		&ResourceEcs{},
 	)
 }
 
 func MockUserRegister(sc *config.ServerConfig) {
+	ecs := []*ResourceEcs{
+		{
+			Model: gorm.Model{},
+			ResourceCommon: ResourceCommon{
+				Hash:   "ad",
+				VmType: "adf",
+				Vendor: "adf",
+				Tags: StringArray{
+					"adf",
+				},
+			},
+			InstanceId:   "i-2zez1v7z5z",
+			InstanceName: "a",
+			InstanceType: "b",
+			VpcId:        "c",
+			OsType:       "d",
+			ZoneId:       "e",
+			Status:       "f",
+			Cpu:          10,
+			Memory:       10,
+			OSName:       "aa",
+			Description:  "ac",
+			ImageId:      "ad",
+			Hostname:     "af",
+			SecurityGroupIds: StringArray{
+				"sg-9id3l839",
+			},
+			PrivateIpAddress:  nil,
+			PublicIpAddress:   nil,
+			NetworkInterfaces: nil,
+			DiskIds:           nil,
+			StartTime:         "",
+			CreationTime:      "",
+			AutoReleaseTime:   "",
+			LastInvokedTime:   "",
+		},
+	}
 	menus := []*Menu{
 		{
 			Name:      "System",
@@ -131,6 +169,16 @@ func MockUserRegister(sc *config.ServerConfig) {
 				RoleValue: "frontAdmin",
 			},
 		},
+	}
+	for _, i := range ecs {
+		_ = i.CreateOne()
+	}
+
+	ecsAll, _ := GetResourceEcsAll()
+
+	for _, i := range ecsAll {
+		sc.Logger.Info("模拟数据", zap.Any("ecs", i))
+		sc.Logger.Info("主机名字：", zap.String("主机名字", i.InstanceName))
 	}
 
 	u1.Password = common.BcryptHash(u1.Password)

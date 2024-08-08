@@ -7,5 +7,14 @@ jwt:
   issuer: dayunwei
   expire_time: 30000m
 
+public_cloud_sync:
+  run_interval_seconds: 10
+  ali_cloud:
+    - enable: true
+      region_id: cn-bj4
+      access_key_id: k1
+      access_key_secret: a1
+
+
 mysql:
   dsn: "internal:idZHFPzLLZ@tcp(192.168.3.220:3306)/bigyunwei?charset=utf8mb4&parseTime=True&loc=Local"
