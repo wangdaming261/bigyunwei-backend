@@ -1,10 +1,13 @@
 package models
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"strconv"
 )
 
 type ResourceCommon struct {
@@ -99,6 +102,14 @@ type ResourceEcs struct {
 	//DeletionProtection              bool    `json:"DeletionProtection" xml:"DeletionProtection"`
 }
 
+func (obj *ResourceEcs) GenHash() string {
+	h := md5.New()
+	h.Write([]byte(strconv.Itoa(obj.Cpu)))
+	h.Write([]byte(strconv.Itoa(obj.Memory)))
+	return hex.EncodeToString(h.Sum(nil))
+
+}
+
 func (obj *ResourceEcs) Create() error {
 	return Db.Create(obj).Error
 }
@@ -107,12 +118,16 @@ func (obj *ResourceEcs) DeleteOne() error {
 	return Db.Select(clause.Associations).Unscoped().Delete(obj).Error
 }
 
+func DeleteResourceEcsOneByInstanceId(id string) error {
+	return Db.Unscoped().Where("instance_id = ?", id).Delete(&ResourceEcs{}).Error
+}
+
 func (obj *ResourceEcs) CreateOne() error {
 	return Db.Create(obj).Error
 }
 
 func (obj *ResourceEcs) UpdateOne() error {
-	return Db.Updates(obj).Error
+	return Db.Where("id = ?", obj.ID).Updates(obj).Error
 }
 
 func GetResourceEcsAll() (objs []*ResourceEcs, err error) {
@@ -137,4 +152,20 @@ func GetResourceEcsById(id int) (*ResourceEcs, error) {
 		return nil, fmt.Errorf("数据库错误: %v", err)
 	}
 	return &dbObj, nil
+}
+
+func GetResourceEscUidAndHash() (map[string]string, error) {
+	var objs []*ResourceEcs
+
+	err := Db.Find(&objs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]string)
+	for _, h := range objs {
+		m[h.InstanceId] = h.Hash
+	}
+
+	return m, nil
 }

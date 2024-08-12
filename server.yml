@@ -11,6 +11,12 @@ public_cloud_sync:
   run_interval_seconds: 10
   ali_cloud:
     - enable: true
+      name: "aliyun-1"
+      region_id: cn-bj4
+      access_key_id: k1
+      access_key_secret: a1
+    - enable: true
+      name: "aliyun-2"
       region_id: cn-bj4
       access_key_id: k1
       access_key_secret: a1

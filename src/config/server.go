@@ -27,6 +27,7 @@ type PublicCloudSync struct {
 
 type AliCloud struct {
 	Enable          bool   `yaml:"enable"`
+	Name            string `yaml:"name"`
 	RegionId        string `yaml:"region_id"`
 	AccessKeyId     string `yaml:"access_key_id"`
 	AccessKeySecret string `yaml:"access_key_secret"`
