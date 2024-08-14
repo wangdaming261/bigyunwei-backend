@@ -4,7 +4,12 @@ import (
 	"bigyunwei-backend/src/config"
 	"bigyunwei-backend/src/models"
 	"context"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
+	ecs20140526 "github.com/alibabacloud-go/ecs-20140526/v3/client"
+	util "github.com/alibabacloud-go/tea-utils/v2/service"
+	"github.com/alibabacloud-go/tea/tea"
+	"gorm.io/gorm"
+
 	"github.com/gammazero/workerpool"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -28,10 +33,12 @@ func (cm *Manager) RunSyncCloudResourceEcs(ctx context.Context) {
 		cm.Sc.Logger.Info("上次同步任务还未完成，本次不执行")
 		return
 	}
-	// 上次完成了
+	// 开始同步
+	cm.Sc.Logger.Info("开始同步ecs")
 	cm.SetEcsSynced(false)
+	defer cm.SetEcsSynced(true)
 
-	dbUidHashM, err := models.GetResourceEscUidAndHash()
+	dbUidHashM, err := models.GetResourceEcsUidAndHash()
 	if err != nil {
 		cm.Sc.Logger.Error("获取数据库中的ecs uid和hash失败", zap.Error(err))
 	}
@@ -60,30 +67,29 @@ func (cm *Manager) RunSyncCloudResourceEcs(ctx context.Context) {
 	rangeFunc := func(k, v interface{}) bool {
 		// uid
 		uid := k.(string)
-		aliEcs := v.(models.ResourceEcs)
+		aliEcs := v.(*models.ResourceEcs)
 
 		localUidSet[uid] = struct{}{}
 
 		dbHash, ok := dbUidHashM[uid]
 		if !ok {
 			// 在公有云 不在本地数据库
-			toAddSet = append(toAddSet, &aliEcs)
+			toAddSet = append(toAddSet, aliEcs)
 			toAddNum++
 		} else {
 			// 在的话对比hash
 			if dbHash != aliEcs.Hash {
-				toModSet = append(toModSet, &aliEcs)
+				toModSet = append(toModSet, aliEcs)
 				toModNum++
 			}
 		}
 		return true
 	}
 	aliEcs.Range(rangeFunc)
-
-	for uid, hash := range dbUidHashM {
+	for instanceId := range dbUidHashM {
 		// 说明不在公有云，但在本地
-		if _, ok := localUidSet[uid]; !ok {
-			toDelUIds = append(toDelUIds, hash)
+		if _, ok := localUidSet[instanceId]; !ok {
+			toDelUIds = append(toDelUIds, instanceId)
 			toDelNum++
 		}
 
@@ -137,9 +143,9 @@ func (cm *Manager) RunSyncCloudResourceEcs(ctx context.Context) {
 	}
 
 	took := time.Since(start)
-	cm.Sc.Logger.Info("同步ecs结束时间",
-		zap.Any("本次总数", len(localUidSet)),
-		zap.Any("增添资源", len(dbUidHashM)),
+	cm.Sc.Logger.Info("本次同步ecs结束",
+		zap.Any("表中本次总数", len(localUidSet)),
+		//zap.Any("增加资源", len(dbUidHashM)),
 		zap.Any("toAddNum", toAddNum),
 		zap.Any("toModNum", toModNum),
 		zap.Any("toDelNum", toDelNum),
@@ -162,32 +168,77 @@ func (cm *Manager) RunSyncCloudResource(ctx context.Context) {
 
 // ecs 转换的方法, 阿里云的
 
-func (cm *Manager) ConverseEcsCloudAli(ins ecs.Instance) *models.ResourceEcs {
-	return nil
+func (cm *Manager) ConverseEcsCloudAli(ali *ecs20140526.DescribeInstancesResponseBodyInstancesInstance) *models.ResourceEcs {
+	a := &models.ResourceEcs{
+		Model: gorm.Model{},
+		ResourceCommon: models.ResourceCommon{
+			Tags: models.StringArray{
+				"adf",
+			},
+		},
+		InstanceId:        *ali.InstanceId,
+		InstanceName:      *ali.InstanceName,
+		InstanceType:      *ali.InstanceType,
+		VpcId:             *ali.VpcAttributes.VpcId,
+		OsType:            *ali.OSType,
+		ZoneId:            *ali.ZoneId,
+		Status:            *ali.Status,
+		Cpu:               *ali.Cpu,
+		Memory:            *ali.Memory,
+		OSName:            *ali.OSName,
+		Description:       *ali.Description,
+		ImageId:           *ali.ImageId,
+		Hostname:          *ali.HostName,
+		SecurityGroupIds:  models.StringArray{"Data: ali.DiskIds", "asdf"},
+		PrivateIpAddress:  models.StringArray{"Data: ali.DiskIds", "asdf"},
+		PublicIpAddress:   models.StringArray{"Data: ali.DiskIds", "asdf"},
+		NetworkInterfaces: models.StringArray{"Data: ali.DiskIds", "asdf"},
+		DiskIds:           models.StringArray{"Data: ali.DiskIds", "asdf"},
+		StartTime:         *ali.StartTime,
+		CreationTime:      *ali.CreationTime,
+		AutoReleaseTime:   *ali.AutoReleaseTime,
+		LastInvokedTime:   "",
+	}
+	a.GenHash()
+	return a
 }
 
 func (cm *Manager) RunSyncOneCloudEcsAli(ac *config.AliCloud, aliEcs *sync.Map) {
-	client, err := ecs.NewClientWithAccessKey(
-		ac.RegionId,
-		ac.AccessKeyId,
-		ac.AccessKeySecret,
-	)
+	cm.Sc.Logger.Info("开始获取阿里云ECS资源", zap.String("name", ac.Name))
+	c := &openapi.Config{
+		// 必填，请确保代码运行环境设置了环境变量 ALIBABA_CLOUD_ACCESS_KEY_ID。
+		AccessKeyId: tea.String(ac.AccessKeyId),
+		// 必填，请确保代码运行环境设置了环境变量 ALIBABA_CLOUD_ACCESS_KEY_SECRET。
+		AccessKeySecret: tea.String(ac.AccessKeySecret),
+	}
+	c.Endpoint = tea.String("ecs.cn-beijing.aliyuncs.com")
+	client, err := ecs20140526.NewClient(c)
 	if err != nil {
 		cm.Sc.Logger.Error("创建阿里云客户端失败", zap.Error(err))
 		return
 	}
-	resp, err := client.DescribeInstances(&ecs.DescribeInstancesRequest{})
+	describeInstanceStatusRequest := &ecs20140526.DescribeInstancesRequest{
+		RegionId: tea.String(ac.RegionId),
+	}
+	runtime := &util.RuntimeOptions{}
+	resp, err := client.DescribeInstancesWithOptions(describeInstanceStatusRequest, runtime)
 	if err != nil {
-		cm.Sc.Logger.Error("获取阿里云资源失败 DescribeInstances", zap.Error(err))
+		cm.Sc.Logger.Error("获取阿里云资源失败 DescribeInstanceStatus", zap.Error(err))
 		return
 	}
+	//jsonString := util.ToJSONString(resp.Body)
+	//fmt.Println(tea.StringValue(jsonString))
+	//time.Sleep(1000 * time.Second)
 
-	cloudIns := resp.Instances
+	cloudIns := resp.Body.Instances
 	for _, ins := range cloudIns.Instance {
 		// 保存到sync.Map
 		dbIns := cm.ConverseEcsCloudAli(ins)
 		aliEcs.Store(dbIns.InstanceId, dbIns)
+		//_ = cm.ConverseEcsCloudAli(ins)
+
 	}
 
-	cm.Sc.Logger.Info("模拟同步阿里云资源", zap.Int("数量", resp.TotalCount))
+	//cm.Sc.Logger.Info("模拟同步阿里云资源", zap.Int("数量", resp.TotalCount))
+
 }

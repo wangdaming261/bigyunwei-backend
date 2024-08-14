@@ -30,8 +30,8 @@ type ResourceEcs struct {
 	OsType      string `json:"OsType" gorm:"comment:操作系统类型 win linux"`
 	ZoneId      string `json:"ZoneId" gorm:"comment:实例所属可用区 cn-hangzhou-g"`
 	Status      string `json:"Status" gorm:"comment:实例状态。取值范围：Pending：创建中，Running：运行中，Stopped：已停止。"`
-	Cpu         int    `json:"Cpu" gorm:"comment:实例CPU核数"`
-	Memory      int    `json:"Memory" gorm:"comment:内存大小，单位为MiB。"`
+	Cpu         int32  `json:"Cpu" gorm:"comment:实例CPU核数"`
+	Memory      int32  `json:"Memory" gorm:"comment:内存大小，单位为MiB。"`
 	OSName      string `json:"OSName" gorm:"comment:操作系统发行版名称，CentOS 7.4 64 位"`
 	Description string `json:"Description" gorm:"comment:实例描述信息"`
 	ImageId     string `json:"ImageId" gorm:"comment:镜像模板"`
@@ -102,12 +102,12 @@ type ResourceEcs struct {
 	//DeletionProtection              bool    `json:"DeletionProtection" xml:"DeletionProtection"`
 }
 
-func (obj *ResourceEcs) GenHash() string {
+func (obj *ResourceEcs) GenHash() {
 	h := md5.New()
-	h.Write([]byte(strconv.Itoa(obj.Cpu)))
-	h.Write([]byte(strconv.Itoa(obj.Memory)))
-	return hex.EncodeToString(h.Sum(nil))
-
+	h.Write([]byte(obj.InstanceId))
+	h.Write([]byte(strconv.Itoa(int(obj.Cpu))))
+	h.Write([]byte(strconv.Itoa(int(obj.Memory))))
+	obj.Hash = hex.EncodeToString(h.Sum(nil))
 }
 
 func (obj *ResourceEcs) Create() error {
@@ -154,7 +154,7 @@ func GetResourceEcsById(id int) (*ResourceEcs, error) {
 	return &dbObj, nil
 }
 
-func GetResourceEscUidAndHash() (map[string]string, error) {
+func GetResourceEcsUidAndHash() (map[string]string, error) {
 	var objs []*ResourceEcs
 
 	err := Db.Find(&objs).Error

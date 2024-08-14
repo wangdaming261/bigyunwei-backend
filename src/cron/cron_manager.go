@@ -27,5 +27,7 @@ func (cm *Manager) GetEcsSynced() bool {
 }
 
 func NewManager(sc *config.ServerConfig) *Manager {
-	return &Manager{Sc: sc}
+	return &Manager{Sc: sc,
+		EcsLastSyncFinished: true,
+	}
 }

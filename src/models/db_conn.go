@@ -174,12 +174,12 @@ func MockUserRegister(sc *config.ServerConfig) {
 		_ = i.CreateOne()
 	}
 
-	ecsAll, _ := GetResourceEcsAll()
-
-	for _, i := range ecsAll {
-		sc.Logger.Info("模拟数据", zap.Any("ecs", i))
-		sc.Logger.Info("主机名字：", zap.String("主机名字", i.InstanceName))
-	}
+	//ecsAll, _ := GetResourceEcsAll()
+	//
+	//for _, i := range ecsAll {
+	//	sc.Logger.Info("模拟数据", zap.Any("ecs", i))
+	//	sc.Logger.Info("主机名字：", zap.String("主机名字", i.InstanceName))
+	//}
 
 	u1.Password = common.BcryptHash(u1.Password)
 	err := Db.Create(&u1).Error
